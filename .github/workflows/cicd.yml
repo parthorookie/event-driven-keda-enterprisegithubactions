@@ -10,7 +10,7 @@ env:
 
 jobs:
 
-  # ---------------- SAST (CodeQL) ----------------
+# ---------------- SAST (CodeQL) ----------------
   sast-codeql:
     runs-on: ubuntu-latest
     permissions:
@@ -32,25 +32,38 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
 
-  # ---------------- Dependency Scan (Snyk) ----------------
+# ---------------- Dependency Scan (Snyk) ----------------
   dependency-scan:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      # API
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # Install dependencies BEFORE scanning
+      - name: Install API dependencies
+        working-directory: app/api
+        run: npm install
+
+      - name: Install Worker dependencies
+        working-directory: app/worker
+        run: npm install
+
+      # Run Snyk scans
       - name: Snyk Scan API
-        uses: snyk/actions/node@v1
+        uses: snyk/actions/node@master
         with:
           command: test
           args: --file=app/api/package.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # Worker
       - name: Snyk Scan Worker
-        uses: snyk/actions/node@v1
+        uses: snyk/actions/node@master
         with:
           command: test
           args: --file=app/worker/package.json
@@ -58,7 +71,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 
-  # ---------------- Secrets Scan ----------------
+# ---------------- Secrets Scan ----------------
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
@@ -67,13 +80,13 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
 
 
-  # ---------------- Build + Test + Scan + Push ----------------
+# ---------------- Build + Test + Scan + Push ----------------
   build-test-scan-push:
     needs: [sast-codeql, dependency-scan, secrets-scan]
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: read
       packages: write
       security-events: write
 
@@ -101,6 +114,7 @@ jobs:
         working-directory: app/worker
         run: npm test || true
 
+
       # ---------------- SonarCloud ----------------
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
@@ -112,9 +126,11 @@ jobs:
             -Dsonar.sources=app
             -Dsonar.organization=rookiep
 
+
       # ---------------- Docker Login ----------------
       - name: Docker login GHCR
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
 
       # ---------------- Build Images ----------------
       - name: Build API Image
@@ -125,6 +141,7 @@ jobs:
 
       - name: Build Frontend Image
         run: docker build -t ghcr.io/${{ github.repository }}/frontend:latest ./app/frontend
+
 
       # ---------------- Trivy Scan ----------------
       - name: Trivy scan API
@@ -142,6 +159,7 @@ jobs:
         with:
           image-ref: ghcr.io/${{ github.repository }}/frontend:latest
 
+
       # ---------------- Push Images ----------------
       - name: Push API image
         run: docker push ghcr.io/${{ github.repository }}/api:latest
@@ -153,7 +171,7 @@ jobs:
         run: docker push ghcr.io/${{ github.repository }}/frontend:latest
 
 
-  # ---------------- DAST ----------------
+# ---------------- DAST ----------------
   dast-owasp:
     needs: build-test-scan-push
     runs-on: ubuntu-latest
@@ -162,10 +180,10 @@ jobs:
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: "http://localhost:3000"
+          target: "https://example.com"   # replace with deployed service URL
 
 
-  # ---------------- Policy Gates ----------------
+# ---------------- Policy Gates ----------------
   policy-gates:
     needs: dast-owasp
     runs-on: ubuntu-latest
@@ -178,7 +196,7 @@ jobs:
           files: helm-charts/
 
 
-  # ---------------- GitOps Trigger ----------------
+# ---------------- GitOps Trigger ----------------
   gitops-update:
     needs: policy-gates
     runs-on: ubuntu-latest
