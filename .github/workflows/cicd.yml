@@ -118,8 +118,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=Rookiep_3tier-cicideventdrivengithbactions
-            -Dsonar.organization=rookiep
+            -Dsonar.projectKey=parthorookie_event-driven-keda-enterprisegithubactions
+            -Dsonar.organization=parthorookie
             -Dsonar.sources=app
 
       # ---------------- Docker Login ----------------
