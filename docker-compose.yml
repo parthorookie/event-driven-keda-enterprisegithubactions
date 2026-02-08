@@ -19,18 +19,12 @@ services:
     depends_on:
       - rabbitmq
 
-  frontend:
-    build: ./app/frontend
-    ports:
-      - "8080:80"
-
-
   prometheus:
     image: prom/prometheus
     ports:
       - "9090:9090"
     volumes:
-      - /c/Users/ACER/Downloads/event-driven-keda-enterprisegithubactions/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus:/etc/prometheus
 
   grafana:
     image: grafana/grafana
