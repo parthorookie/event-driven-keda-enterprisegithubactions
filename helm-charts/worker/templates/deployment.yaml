@@ -1,18 +1,52 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: worker
+  name: api
+  labels:
+    app: api
+
 spec:
   replicas: 1
+
   selector:
     matchLabels:
-      app: worker
+      app: api
+
   template:
     metadata:
       labels:
-        app: worker
+        app: api
+
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret   # secret you created for GHCR
+
       containers:
-      - name: worker
-        image: ghcr.io/your/repo/worker:latest
+        - name: api
+          image: ghcr.io/parthorookie/event-driven-keda-enterprisegithubactions/api:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 3003
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3003
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3003
+            initialDelaySeconds: 20
+            periodSeconds: 10
