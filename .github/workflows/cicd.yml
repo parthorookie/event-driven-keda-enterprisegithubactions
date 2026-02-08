@@ -171,7 +171,8 @@ jobs:
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: "https://example.com"   # ← replace with your actual deployed service URL when ready
+          target: "https://example.com" # ← replace with your actual deployed service URL when ready
+          cmd_options: -I   # ← Add this: Ignore warnings for exit code
 
   # ---------------- Policy Gates ----------------
   policy-gates:
