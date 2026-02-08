@@ -43,7 +43,6 @@ jobs:
         with:
           node-version: 18
 
-      # Install dependencies BEFORE scanning
       - name: Install API dependencies
         working-directory: app/api
         run: npm install
@@ -52,7 +51,6 @@ jobs:
         working-directory: app/worker
         run: npm install
 
-      # Run Snyk scans
       - name: Snyk Scan API
         uses: snyk/actions/node@master
         with:
@@ -69,17 +67,16 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-  # ---------------- Secrets Scan ----------------
-  # (Removed Gitleaks – job is empty now; delete this job entirely if you prefer no placeholder)
+  # ---------------- Secrets Scan (placeholder – can delete if unused) ----------------
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        # No scanning steps – add alternative if needed later
+        # Add secret scanning alternative here later if needed
 
   # ---------------- Build + Test + Scan + Push ----------------
   build-test-scan-push:
-    needs: [sast-codeql, dependency-scan]  # Removed secrets-scan dependency
+    needs: [sast-codeql, dependency-scan]
     runs-on: ubuntu-latest
 
     permissions:
@@ -111,7 +108,6 @@ jobs:
         working-directory: app/worker
         run: npm test || true
 
-      # ---------------- SonarCloud -----------------
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
@@ -122,11 +118,9 @@ jobs:
             -Dsonar.organization=parthorookie
             -Dsonar.sources=app
 
-      # ---------------- Docker Login ----------------
       - name: Docker login GHCR
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # ---------------- Build Images ----------------
       - name: Build API Image
         run: docker build -t ghcr.io/${{ github.repository }}/api:latest ./app/api
 
@@ -136,7 +130,6 @@ jobs:
       - name: Build Frontend Image
         run: docker build -t ghcr.io/${{ github.repository }}/frontend:latest ./app/frontend
 
-      # ---------------- Trivy Scan ----------------
       - name: Trivy scan API
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -152,7 +145,6 @@ jobs:
         with:
           image-ref: ghcr.io/${{ github.repository }}/frontend:latest
 
-      # ---------------- Push Images ----------------
       - name: Push API image
         run: docker push ghcr.io/${{ github.repository }}/api:latest
 
@@ -162,13 +154,17 @@ jobs:
       - name: Push Frontend image
         run: docker push ghcr.io/${{ github.repository }}/frontend:latest
 
-
-
   # ---------------- GitOps Trigger ----------------
   gitops-update:
+    needs: build-test-scan-push   # Add this back if you want it to run after images are pushed
     runs-on: ubuntu-latest
+    permissions:
+      contents: write             # ← Critical: Allows push/commit with GITHUB_TOKEN
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}   # Explicit token (helps reliability)
 
       - name: Update Helm Image Tags
         run: |
