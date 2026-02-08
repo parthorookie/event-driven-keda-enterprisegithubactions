@@ -19,7 +19,7 @@ spec:
 
     spec:
       imagePullSecrets:
-        - name: ghcr-secret   # GitHub Container Registry secret
+        - name: ghcr-secret
 
       containers:
         - name: frontend
@@ -27,7 +27,7 @@ spec:
           imagePullPolicy: Always
 
           ports:
-            - containerPort: 3000   # frontend port
+            - containerPort: 80
 
           resources:
             requests:
@@ -40,13 +40,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: 80
             initialDelaySeconds: 10
             periodSeconds: 5
 
           livenessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: 80
             initialDelaySeconds: 20
             periodSeconds: 10
