@@ -15,4 +15,4 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/your/repo/frontend:latest
+        image: ghcr.io/parthorookie/event-driven-keda-enterprisegithubactions-api:latest

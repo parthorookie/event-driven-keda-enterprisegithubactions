@@ -15,4 +15,4 @@ spec:
     spec:
       containers:
       - name: rabbitmq
-        image: ghcr.io/your/repo/rabbitmq:latest
+        image: ghcr.io/parthorookie/event-driven-keda-enterprisegithubactions-api:latest
