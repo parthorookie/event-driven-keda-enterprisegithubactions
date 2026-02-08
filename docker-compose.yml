@@ -33,3 +33,10 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+
+  frontend:
+    build: ./app/frontend
+    ports:
+      - "8081:8081"
+    depends_on:
+      - api
