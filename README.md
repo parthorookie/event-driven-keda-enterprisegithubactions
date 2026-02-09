@@ -20,7 +20,7 @@ This repository demonstrates a **production-grade, event-driven 3-tier microserv
 
 - **DevSecOps**
   - Security-focused build and deployment practices
-  - Integration-ready for vulnerability scanning tools (Trivy, OWASP, SonarQube)
+  - Integration-ready for vulnerability scanning tools (Trivy, OWASP, SonarQube,SYNK)
 
 - **KEDA Autoscaling**
   - Event-driven scaling of worker pods based on **RabbitMQ queue depth**
