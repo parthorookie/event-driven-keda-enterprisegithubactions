@@ -12,25 +12,8 @@ Modern, production-grade **event-driven microservices architecture** deployed on
 
 ## Architecture Overview
 
-```mermaid
-graph TD
-    A[GitHub Push / PR] --> B[GitHub Actions CI]
-    B -->|SAST / Dependency Scan / SonarCloud| C[Quality Gate]
-    C -->|Build & Trivy Scan| D[Push Images to GHCR]
-    D --> E[Argo CD detects Git change]
-    E --> F[Deploy Helm Charts]
-    F --> G[Kubernetes Cluster<br>Minikube / Docker Desktop]
-    G --> H[Frontend]
-    G --> I[API]
-    G --> J[Worker]
-    H --> K[RabbitMQ]
-    I --> K
-    J --> K
-    K --> J
-    L[KEDA] -->|Scale on Queue Depth| J
-    M[Prometheus] -->|Scrape Metrics| I & J & H & K
-    N[Grafana] --> M
-Features
+![Uploading Final upcoming 3 tier CI CD project.png…]()
+
 
 CI Pipeline:
 CodeQL (SAST)
