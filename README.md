@@ -1,115 +1,131 @@
 # Production-Grade Event-Driven 3 tier DevSecops GitOps CI/CD with GitHub Actions & ArgoCD, Helm Deployments & KEDA Autoscaling for Reliable RabbitMQ Workflows
 
-Modern, production-grade **event-driven microservices architecture** deployed on Kubernetes using:
-
-- **GitHub Actions** → full CI/CD pipeline (build, test, scan, push images)
-- **Argo CD** → GitOps continuous deployment
-- **KEDA** → event-driven autoscaling (RabbitMQ-based)
-- **Prometheus + Grafana** → observability
-- **Trivy, SonarCloud, Snyk** → security & quality gates
-- **RabbitMQ** → message broker
-- **Minikube / Docker Desktop** → local development
-
-## Architecture Overview
-
-![Uploading Final upcoming 3 tier CI CD project.png…]()
 
 
-CI Pipeline:
-CodeQL (SAST)
-Snyk dependency scanning
-SonarCloud code quality
-Trivy container scanning
-Docker multi-arch build & push to GHCR
+This repository demonstrates a **production-grade, event-driven 3-tier microservices architecture** with **DevSecOps & GitOps CI/CD**, built for **local development and testing**. It leverages **GitHub Actions**, **ArgoCD**, **Helm**, and **KEDA autoscaling** to ensure **reliable RabbitMQ workflows** and scalable event-driven processing.  
 
-CD / GitOps:
-Argo CD syncs Helm charts from Git
-Auto image tag updates via GitHub Actions
+---
 
-Event-Driven Scaling:
-KEDA scales worker pods based on RabbitMQ queue length
+## 🔧 Key Features
 
-Observability:
-Prometheus scraping
-Grafana dashboards (Node Exporter + Kubernetes + app metrics)
+- **3-Tier Event-Driven Architecture**
+  - Presentation Layer (Frontend)
+  - Business Logic Layer (Microservices)
+  - Data Layer (Database & Messaging)
 
-Security:
-Multi-layered scanning (dependency, container, code)
-Quality gates before deployment
+- **CI/CD & GitOps**
+  - Automated builds and deployments using **GitHub Actions**
+  - GitOps-driven deployments using **ArgoCD**
+  - Helm chart-based deployments for modularity and version control
 
+- **DevSecOps**
+  - Security-focused build and deployment practices
+  - Integration-ready for vulnerability scanning tools (Trivy, OWASP, SonarQube)
 
-Tech Stack
+- **KEDA Autoscaling**
+  - Event-driven scaling of worker pods based on **RabbitMQ queue depth**
+  - Ensures high availability and performance under load
 
-LayerTechnologyFrontendReact / Next.js / ViteAPINode.js / ExpressWorkerNode.js (background jobs)Message BrokerRabbitMQDatabaseOracle / PostgreSQL (configurable)OrchestrationKubernetes (Minikube / Docker Desktop)AutoscalingKEDA (RabbitMQ scaler)CI/CDGitHub ActionsGitOpsArgo CDMonitoringPrometheus + GrafanaSecurity ScanningTrivy, Snyk, SonarCloud, CodeQLContainer RegistryGitHub Container Registry (GHCR)
-Quick Start (Local Development)
-Prerequisites
+- **Local-First Deployment**
+  - Designed to run fully on **local Kubernetes (Minikube / Kind)**
+  - Ideal for testing CI/CD pipelines, autoscaling, and DevSecOps practices
 
-Docker Desktop or Minikube
-kubectl
-Helm
-Git
+- **Reliable RabbitMQ Workflows**
+  - Event-driven processing with **message queuing**
+  - Optional **Dead Letter Queues** (DLQ) and **retry mechanisms**
+  - Supports scalable and fault-tolerant processing
 
-1. Clone the repository
-Bashgit clone https://github.com/parthorookie/event-driven-keda-enterprisegithubactions.git
-cd event-driven-keda-enterprisegithubactions
-2. Start local cluster
-Bash# Option A: Docker Desktop Kubernetes
-# → Enable Kubernetes in Docker Desktop settings
+---
 
-# Option B: Minikube
-minikube start --memory=8192 --cpus=4
-3. Install RabbitMQ, Prometheus, Grafana (via Helm)
-Bash# Add repos
+## 🛠️ Prerequisites
+
+Before running locally, ensure you have:
+
+- **Docker & Docker Compose**
+- **Minikube** or **Kind Kubernetes Cluster**
+- **kubectl**
+- **Helm 3+**
+- **GitHub CLI** (for testing GitHub Actions locally with `act` if needed)
+- **Node.js / Python** (depending on your microservices)
+
+---
+
+## ⚡ Local Setup
+
+1. **Start Minikube**
+```bash
+minikube start --driver=docker
+Enable KEDA & Metrics Server
+
+kubectl apply -f https://github.com/kedacore/keda/releases/latest/download/keda.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+Deploy RabbitMQ using Helm
+
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
+helm install rabbitmq bitnami/rabbitmq --set auth.username=guest,auth.password=guest
+Deploy Microservices with Helm
 
-# Install RabbitMQ
-helm install rabbitmq bitnami/rabbitmq \
-  --set auth.username=guest \
-  --set auth.password=guest \
-  --set service.type=ClusterIP
+helm install backend ./helm/backend
+helm install frontend ./helm/frontend
+Configure KEDA ScaledObject for Autoscaling
 
-# Install kube-prometheus-stack (Prometheus + Grafana)
-helm install monitoring prometheus-community/kube-prometheus-stack \
-  --namespace monitoring --create-namespace \
-  --set grafana.adminPassword=admin123
-4. Deploy the application with Argo CD
-Bash# Install Argo CD
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -f keda/scaledobject.yaml
+Verify Deployments
 
-# Port-forward Argo CD UI
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl get pods
+kubectl get svc
+kubectl get hpa
+⚙️ GitHub Actions CI/CD
+Build & Push Docker Images
+Automatically builds microservice images and pushes to your local Docker registry (or GitHub Container Registry).
 
-# Get admin password
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-Open http://localhost:8080 → login with admin + password from above.
-Then create Application pointing to your repo's Helm charts.
-5. Access Grafana
-Bashkubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
-http://localhost:3000 → admin / admin123
-Import dashboard ID 1860 (Node Exporter) or 6417 to start seeing metrics.
-Project Structure
-textevent-driven-keda-enterprisegithubactions/
-├── app/
-│   ├── api/          # REST API (Node.js/Express)
-│   ├── worker/       # Background worker (consumes RabbitMQ)
-│   └── frontend/     # React / Next.js UI
-├── helm-charts/
-│   ├── api/
-│   ├── worker/
-│   ├── frontend/
-│   └── rabbitmq/     # optional override
-├── .github/workflows/ # CI/CD pipeline
+Deploy to Kubernetes
+GitHub Actions triggers ArgoCD deployments via Helm charts.
+
+Local Testing
+All actions can be simulated locally using Act.
+
+📊 Observability & Monitoring
+Monitor queue depth for RabbitMQ
+
+Check pod scaling and resource usage
+
+KEDA automatically scales workers based on event-driven load
+
+You can optionally integrate Prometheus + Grafana dashboards locally.
+
+🏗️ Project Structure
+├── helm/                  # Helm charts for frontend, backend, RabbitMQ
+├── keda/                  # KEDA ScaledObject definitions
+├── github-actions/        # CI/CD workflow definitions
+├── services/              # Microservices (Node.js / Python)
+├── scripts/               # Helper scripts for local deployments
 └── README.md
-CI/CD Pipeline Highlights
+🔑 Notes
+This setup is production-grade in architecture but runs fully on local machine for learning, testing, and CI/CD validation.
 
-Triggers on push to main
-Parallel jobs: CodeQL, Snyk, SonarCloud, Trivy
-Builds & pushes multi-service images to GHCR
-Updates Helm values with new image tags → commits back (GitOps trigger)
-Argo CD detects change → deploys to cluster
+You can extend it for cloud deployment with AWS EKS, Azure AKS, or GCP GKE by changing Helm values and container registries.
+
+
+🌟 Contributing
+Feel free to contribute by improving:
+
+Helm charts
+
+CI/CD workflows
+
+KEDA scaling rules
+
+Observability dashboards
+
+📖 References
+KEDA Documentation
+
+Helm Charts
+
+ArgoCD Documentation
+
+RabbitMQ Helm Chart
 
 Monitoring & Dashboards
 
@@ -125,4 +141,5 @@ Recommended Grafana dashboards:
 6417 – Node Exporter Server Metrics
 315  – Kubernetes Cluster Monitoring
 
-Next Steps / Roadmap
+⚡ License
+This project is MIT licensed.
